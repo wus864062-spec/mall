@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+package api.order.v1;
+
+import "google/api/annotations.proto";
+
+option go_package = "mall/api/order/v1;v1";
+
+service OrderService {
+  rpc CreateOrder (CreateOrderRequest) returns (GetOrderReply) {
+    option (google.api.http) = {
+      post: "/v1/orders"
+      body: "*"
+    };
+  }
+  rpc GetOrder (GetOrderRequest) returns (GetOrderReply) {
+    option (google.api.http) = {
+      get: "/v1/orders/{id}"
+    };
+  }
+  rpc ListOrders (ListOrdersRequest) returns (ListOrdersReply) {
+    option (google.api.http) = {
+      get: "/v1/orders"
+    };
+  }
+  rpc CancelOrder (CancelOrderRequest) returns (GetOrderReply) {
+    option (google.api.http) = {
+      post: "/v1/orders/{id}/cancel"
+      body: "*"
+    };
+  }
+}
+
+message OrderItem {
+  int64 product_id = 1;
+  string name = 2;
+  int64 price_fen = 3;
+  int64 quantity = 4;
+  int64 amount_fen = 5;
+}
+
+message Order {
+  int64 id = 1;
+  int64 user_id = 2;
+  string status = 3;
+  int64 total_fen = 4;
+  repeated OrderItem items = 5;
+  int64 created_at = 6;
+}
+
+message CreateOrderRequest {
+  int64 product_id = 1;
+  int64 quantity = 2;
+}
+message GetOrderRequest { int64 id = 1; }
+message GetOrderReply { Order order = 1; }
+
+message ListOrdersRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+}
+message ListOrdersReply {
+  repeated Order orders = 1;
+  int64 total = 2;
+}
+
+message CancelOrderRequest { int64 id = 1; }

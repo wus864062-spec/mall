@@ -1,0 +1,336 @@
+{
+  "users": [
+    {
+      "ID": 1,
+      "WalletAddress": "0xd0e440f03b2b0ce452ae6eda56750b97ef7a4b9f",
+      "Nickname": "用户7a4b9f",
+      "Avatar": "",
+      "InviteCode": "INV000001",
+      "InviterID": 0,
+      "ParentID": 0,
+      "Side": "",
+      "LeftID": 0,
+      "RightID": 0,
+      "ChainNextID": 0,
+      "OccupiedPos": 0,
+      "PerfFen": 10200000,
+      "SettledPairFen": 0,
+      "PairClearedRightFen": 0,
+      "TokenVersion": 2,
+      "CreatedAt": 1789098094
+    }
+  ],
+  "user_seq": 1,
+  "balances": {
+    "1": 10000000
+  },
+  "ledger": [
+    {
+      "ID": 1,
+      "UserID": 1,
+      "AmountFen": 100000,
+      "BalanceFen": 100000,
+      "Type": "recharge",
+      "RefType": "recharge",
+      "RefID": 0,
+      "CreatedAt": 1789107514
+    },
+    {
+      "ID": 2,
+      "UserID": 1,
+      "AmountFen": -100000,
+      "BalanceFen": 0,
+      "Type": "order_pay",
+      "RefType": "order",
+      "RefID": 1,
+      "CreatedAt": 1789107533
+    },
+    {
+      "ID": 3,
+      "UserID": 1,
+      "AmountFen": 100000,
+      "BalanceFen": 100000,
+      "Type": "order_refund",
+      "RefType": "order",
+      "RefID": 1,
+      "CreatedAt": 1789107547
+    },
+    {
+      "ID": 4,
+      "UserID": 1,
+      "AmountFen": -100000,
+      "BalanceFen": 0,
+      "Type": "order_pay",
+      "RefType": "order",
+      "RefID": 2,
+      "CreatedAt": 1789107574
+    },
+    {
+      "ID": 5,
+      "UserID": 1,
+      "AmountFen": 100000,
+      "BalanceFen": 100000,
+      "Type": "recharge",
+      "RefType": "recharge",
+      "RefID": 0,
+      "CreatedAt": 1789121738
+    },
+    {
+      "ID": 6,
+      "UserID": 1,
+      "AmountFen": -100000,
+      "BalanceFen": 0,
+      "Type": "order_pay",
+      "RefType": "order",
+      "RefID": 3,
+      "CreatedAt": 1789121742
+    },
+    {
+      "ID": 7,
+      "UserID": 1,
+      "AmountFen": 100000,
+      "BalanceFen": 100000,
+      "Type": "recharge",
+      "RefType": "recharge",
+      "RefID": 0,
+      "CreatedAt": 1789131998
+    },
+    {
+      "ID": 8,
+      "UserID": 1,
+      "AmountFen": -100000,
+      "BalanceFen": 0,
+      "Type": "order_pay",
+      "RefType": "order",
+      "RefID": 4,
+      "CreatedAt": 1789132008
+    },
+    {
+      "ID": 9,
+      "UserID": 1,
+      "AmountFen": 10000000,
+      "BalanceFen": 10000000,
+      "Type": "recharge",
+      "RefType": "recharge",
+      "RefID": 0,
+      "CreatedAt": 1789183603
+    },
+    {
+      "ID": 10,
+      "UserID": 1,
+      "AmountFen": -10000000,
+      "BalanceFen": 0,
+      "Type": "order_pay",
+      "RefType": "order",
+      "RefID": 5,
+      "CreatedAt": 1789183614
+    },
+    {
+      "ID": 11,
+      "UserID": 1,
+      "AmountFen": 10000000,
+      "BalanceFen": 10000000,
+      "Type": "recharge",
+      "RefType": "recharge",
+      "RefID": 0,
+      "CreatedAt": 1789187041
+    }
+  ],
+  "ledger_seq": 11,
+  "orders": [
+    {
+      "ID": 5,
+      "UserID": 1,
+      "Status": "paid",
+      "TotalFen": 10000000,
+      "Items": [
+        {
+          "ProductID": 8,
+          "Name": "100000U 分布式存储芯片挖矿 手机挖矿+黄金钻石💎项链+多肽",
+          "PriceFen": 10000000,
+          "Quantity": 1,
+          "AmountFen": 10000000
+        }
+      ],
+      "CreatedAt": 1789183614
+    },
+    {
+      "ID": 2,
+      "UserID": 1,
+      "Status": "paid",
+      "TotalFen": 100000,
+      "Items": [
+        {
+          "ProductID": 1,
+          "Name": "1000USTD认购",
+          "PriceFen": 100000,
+          "Quantity": 1,
+          "AmountFen": 100000
+        }
+      ],
+      "CreatedAt": 1789107574
+    },
+    {
+      "ID": 4,
+      "UserID": 1,
+      "Status": "paid",
+      "TotalFen": 100000,
+      "Items": [
+        {
+          "ProductID": 1,
+          "Name": "1000USTD认购",
+          "PriceFen": 100000,
+          "Quantity": 1,
+          "AmountFen": 100000
+        }
+      ],
+      "CreatedAt": 1789132008
+    },
+    {
+      "ID": 3,
+      "UserID": 1,
+      "Status": "paid",
+      "TotalFen": 100000,
+      "Items": [
+        {
+          "ProductID": 1,
+          "Name": "1000USTD认购",
+          "PriceFen": 100000,
+          "Quantity": 1,
+          "AmountFen": 100000
+        }
+      ],
+      "CreatedAt": 1789121742
+    },
+    {
+      "ID": 1,
+      "UserID": 1,
+      "Status": "cancelled",
+      "TotalFen": 100000,
+      "Items": [
+        {
+          "ProductID": 1,
+          "Name": "1000USTD认购",
+          "PriceFen": 100000,
+          "Quantity": 1,
+          "AmountFen": 100000
+        }
+      ],
+      "CreatedAt": 1789107533
+    }
+  ],
+  "order_seq": 5,
+  "products": [
+    {
+      "ID": 1,
+      "Name": "1000U 牙刷挖矿",
+      "Description": "",
+      "PriceFen": 100000,
+      "Stock": 1000000,
+      "Image": "",
+      "CategoryID": 3,
+      "Status": 1
+    },
+    {
+      "ID": 9,
+      "Name": "160000USTD认购",
+      "Description": "",
+      "PriceFen": 16000000,
+      "Stock": 1000000,
+      "Image": "",
+      "CategoryID": 0,
+      "Status": 0
+    },
+    {
+      "ID": 6,
+      "Name": "50000U 分布式存储芯片挖矿 手机挖矿+黄金钻石💎项链+多肽",
+      "Description": "",
+      "PriceFen": 5000000,
+      "Stock": 1000000,
+      "Image": "",
+      "CategoryID": 3,
+      "Status": 1
+    },
+    {
+      "ID": 10,
+      "Name": "12000U 分布式存储芯片挖矿 手机挖矿+黄金钻石💎戒指+多肽",
+      "Description": "",
+      "PriceFen": 1200000,
+      "Stock": 1000000,
+      "Image": "",
+      "CategoryID": 3,
+      "Status": 1
+    },
+    {
+      "ID": 11,
+      "Name": "24000U 分布式存储芯片挖矿 手机挖矿+黄金钻石💎手链+多肽",
+      "Description": "",
+      "PriceFen": 2400000,
+      "Stock": 1000000,
+      "Image": "",
+      "CategoryID": 3,
+      "Status": 1
+    },
+    {
+      "ID": 3,
+      "Name": "6000U 分布式存储芯片挖矿机",
+      "Description": "",
+      "PriceFen": 600000,
+      "Stock": 1000000,
+      "Image": "",
+      "CategoryID": 3,
+      "Status": 1
+    },
+    {
+      "ID": 5,
+      "Name": "36000U 分布式存储芯片挖矿 手机挖矿+黄金钻石💎项链+多肽",
+      "Description": "",
+      "PriceFen": 3600000,
+      "Stock": 1000000,
+      "Image": "",
+      "CategoryID": 3,
+      "Status": 1
+    },
+    {
+      "ID": 8,
+      "Name": "100000U 分布式存储芯片挖矿 手机挖矿+黄金钻石💎项链+多肽",
+      "Description": "",
+      "PriceFen": 10000000,
+      "Stock": 999999,
+      "Image": "",
+      "CategoryID": 3,
+      "Status": 1
+    },
+    {
+      "ID": 4,
+      "Name": "10000USTD认购",
+      "Description": "",
+      "PriceFen": 1000000,
+      "Stock": 1000000,
+      "Image": "",
+      "CategoryID": 0,
+      "Status": 0
+    },
+    {
+      "ID": 7,
+      "Name": "70000U 分布式存储芯片挖矿 手机挖矿+黄金钻石💎项链+多肽",
+      "Description": "",
+      "PriceFen": 7000000,
+      "Stock": 1000000,
+      "Image": "",
+      "CategoryID": 3,
+      "Status": 1
+    },
+    {
+      "ID": 2,
+      "Name": "3000U AI眼镜挖矿",
+      "Description": "",
+      "PriceFen": 300000,
+      "Stock": 1000000,
+      "Image": "",
+      "CategoryID": 3,
+      "Status": 1
+    }
+  ],
+  "last_pair_settle_date": "2026-09-12"
+}

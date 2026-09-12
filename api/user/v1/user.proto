@@ -1,0 +1,119 @@
+syntax = "proto3";
+
+package api.user.v1;
+
+import "google/api/annotations.proto";
+
+option go_package = "mall/api/user/v1;v1";
+
+service UserService {
+  rpc GetNonce (GetNonceRequest) returns (GetNonceReply) {
+    option (google.api.http) = {
+      post: "/v1/users/nonce"
+      body: "*"
+    };
+  }
+  rpc WalletLogin (WalletLoginRequest) returns (WalletLoginReply) {
+    option (google.api.http) = {
+      post: "/v1/users/wallet-login"
+      body: "*"
+    };
+  }
+  rpc GetMe (GetMeRequest) returns (GetMeReply) {
+    option (google.api.http) = {
+      get: "/v1/users/me"
+    };
+  }
+  rpc UpdateMe (UpdateMeRequest) returns (GetMeReply) {
+    option (google.api.http) = {
+      put: "/v1/users/me"
+      body: "*"
+    };
+  }
+  rpc Logout (LogoutRequest) returns (LogoutReply) {
+    option (google.api.http) = {
+      post: "/v1/users/logout"
+      body: "*"
+    };
+  }
+  rpc GetInvite (GetInviteRequest) returns (GetInviteReply) {
+    option (google.api.http) = {
+      get: "/v1/invite"
+    };
+  }
+  rpc BindInvite (BindInviteRequest) returns (GetMeReply) {
+    option (google.api.http) = {
+      post: "/v1/invite/bind"
+      body: "*"
+    };
+  }
+}
+
+message GetNonceRequest {
+  string wallet_address = 1;
+}
+message GetNonceReply {
+  string nonce = 1;
+}
+
+message WalletLoginRequest {
+  string message = 1;
+  string signature = 2;
+  string invite_code = 3;
+}
+message WalletLoginReply {
+  int64 id = 1;
+  string token = 2;
+  string wallet_address = 3;
+  string nickname = 4;
+  string avatar = 5;
+  string invite_code = 6;
+  int64 inviter_id = 7;
+  string inviter_nickname = 8;
+  int64 parent_id = 9;
+  string side = 10;
+}
+
+message GetMeRequest {}
+message GetMeReply {
+  int64 id = 1;
+  string wallet_address = 2;
+  string nickname = 3;
+  string avatar = 4;
+  string invite_code = 5;
+  int64 inviter_id = 6;
+  string inviter_nickname = 7;
+  int64 parent_id = 8;
+  string side = 9;
+}
+
+message UpdateMeRequest {
+  string nickname = 1;
+  string avatar = 2;
+}
+
+message LogoutRequest {}
+message LogoutReply {}
+
+message GetInviteRequest {}
+message InviteMember {
+  int64 id = 1;
+  string nickname = 2;
+  string invite_code = 3;
+  string side = 4;
+}
+message GetInviteReply {
+  string invite_code = 1;
+  int64 inviter_id = 2;
+  string inviter_nickname = 3;
+  int64 parent_id = 4;
+  string side = 5;
+  int64 left_count = 6;
+  int64 right_count = 7;
+  repeated InviteMember left_members = 8;
+  repeated InviteMember right_members = 9;
+  repeated InviteMember invitees = 10;
+}
+message BindInviteRequest {
+  string invite_code = 1;
+}

@@ -1,0 +1,18 @@
+server:
+  http:
+    addr: 0.0.0.0:8000
+    timeout: 10s
+  grpc:
+    addr: 0.0.0.0:9000
+    timeout: 10s
+# JWT 密钥请用环境变量 JWT_SECRET；未设置时每次启动会随机生成（登录态会失效）。
+# 用户端 dapp（~/projects/dapp）开发：npm run dev:test，vite 将 /v1 代理到本服务 :8000。
+# 本地数据文件默认 data/mall.json，可用 MALL_DATA_FILE 覆盖。
+data:
+  database:
+    driver: mysql
+    source: root:root@tcp(127.0.0.1:3306)/test?parseTime=True&loc=Local
+  redis:
+    addr: 127.0.0.1:6379
+    read_timeout: 0.2s
+    write_timeout: 0.2s

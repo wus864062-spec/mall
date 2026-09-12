@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package api.community.v1;
+
+import "google/api/annotations.proto";
+
+option go_package = "mall/api/community/v1;v1";
+
+service CommunityService {
+  rpc ListPosts (ListPostsRequest) returns (ListPostsReply) {
+    option (google.api.http) = {
+      get: "/v1/community/posts"
+    };
+  }
+  rpc CreatePost (CreatePostRequest) returns (CreatePostReply) {
+    option (google.api.http) = {
+      post: "/v1/community/posts"
+      body: "*"
+    };
+  }
+}
+
+message Post {
+  int64 id = 1;
+  string scope = 2;
+  int64 team_root_id = 3;
+  int64 author_id = 4;
+  string author_name = 5;
+  string content = 6;
+  int64 created_at = 7;
+}
+
+message ListPostsRequest {
+  string scope = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+}
+message ListPostsReply {
+  repeated Post posts = 1;
+  int64 total = 2;
+}
+
+message CreatePostRequest {
+  string scope = 1;
+  string content = 2;
+}
+message CreatePostReply {
+  Post post = 1;
+}

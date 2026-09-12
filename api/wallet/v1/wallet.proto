@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+package api.wallet.v1;
+
+import "google/api/annotations.proto";
+
+option go_package = "mall/api/wallet/v1;v1";
+
+service WalletService {
+  rpc GetWallet (GetWalletRequest) returns (GetWalletReply) {
+    option (google.api.http) = {
+      get: "/v1/wallet"
+    };
+  }
+  rpc Recharge (RechargeRequest) returns (RechargeReply) {
+    option (google.api.http) = {
+      post: "/v1/wallet/recharge"
+      body: "*"
+    };
+  }
+  rpc ListLedger (ListLedgerRequest) returns (ListLedgerReply) {
+    option (google.api.http) = {
+      get: "/v1/wallet/ledger"
+    };
+  }
+}
+
+message GetWalletRequest {}
+message GetWalletReply {
+  int64 balance_fen = 1;
+}
+
+message RechargeRequest {
+  int64 amount_fen = 1;
+}
+message RechargeReply {
+  int64 balance_fen = 1;
+  LedgerEntry entry = 2;
+}
+
+message ListLedgerRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+}
+message ListLedgerReply {
+  repeated LedgerEntry entries = 1;
+  int64 total = 2;
+}
+
+message LedgerEntry {
+  int64 id = 1;
+  int64 amount_fen = 2;
+  int64 balance_fen = 3;
+  string type = 4;
+  string ref_type = 5;
+  int64 ref_id = 6;
+  int64 created_at = 7;
+}

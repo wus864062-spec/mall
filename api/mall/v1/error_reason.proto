@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package mall.v1;
+
+option go_package = "mall/api/mall/v1;v1";
+option java_multiple_files = true;
+option java_package = "mall.v1";
+option objc_class_prefix = "APImallV1";
+
+enum ErrorReason {
+  GREETER_UNSPECIFIED = 0;
+  USER_NOT_FOUND = 1;
+}
