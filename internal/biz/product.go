@@ -7,10 +7,20 @@ import (
 )
 
 const (
-	ProductOnSale int32 = 1
-	CategoryShare int64 = 1
-	CategoryWeb3  int64 = 3
+	ProductOnSale    int32 = 1
+	CategoryShare    int64 = 1
+	CategoryWeb3     int64 = 3 // 300 天
+	CategoryWeb3_600 int64 = 4 // 600 天
+	CategoryWeb3_750 int64 = 5 // 750 天
 )
+
+func Web3Categories() []int64 {
+	return []int64{CategoryWeb3, CategoryWeb3_600, CategoryWeb3_750}
+}
+
+func IsWeb3Category(id int64) bool {
+	return id == CategoryWeb3 || id == CategoryWeb3_600 || id == CategoryWeb3_750
+}
 
 type Product struct {
 	ID          int64

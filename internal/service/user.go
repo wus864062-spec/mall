@@ -2,9 +2,14 @@ package service
 
 import (
 	"context"
+	"encoding/json"
+	"io"
+	"strings"
 
 	pb "mall/api/user/v1"
 	"mall/internal/biz"
+
+	khttp "github.com/go-kratos/kratos/v2/transport/http"
 )
 
 type UserService struct {
@@ -14,6 +19,53 @@ type UserService struct {
 
 func NewUserService(uc *biz.UserUsecase) *UserService {
 	return &UserService{uc: uc}
+}
+
+const OperationUserHTTPNeedInvite = "/api.user.v1.UserService/HTTPNeedInvite"
+
+func (s *UserService) HTTPNeedInvite(ctx khttp.Context) error {
+	khttp.SetOperation(ctx, OperationUserHTTPNeedInvite)
+	h := ctx.Middleware(func(c context.Context, _ interface{}) (interface{}, error) {
+		need, err := s.uc.NeedInvite(c)
+		if err != nil {
+			return nil, err
+		}
+		return map[string]interface{}{"needInvite": need}, nil
+	})
+	out, err := h(ctx, nil)
+	if err != nil {
+		return err
+	}
+	return ctx.Result(200, out)
+}
+
+func (s *UserService) HTTPBindInvite(ctx khttp.Context) error {
+	khttp.SetOperation(ctx, pb.OperationUserServiceBindInvite)
+	raw, _ := io.ReadAll(ctx.Request().Body)
+	var body struct {
+		InviteCode string `json:"invite_code"`
+		Camel      string `json:"inviteCode"`
+	}
+	_ = json.Unmarshal(raw, &body)
+	code := strings.TrimSpace(body.InviteCode)
+	if code == "" {
+		code = strings.TrimSpace(body.Camel)
+	}
+	if code == "" {
+		code = strings.TrimSpace(ctx.Query().Get("invite_code"))
+	}
+	h := ctx.Middleware(func(c context.Context, _ interface{}) (interface{}, error) {
+		u, err := s.uc.BindInvite(c, code)
+		if err != nil {
+			return nil, err
+		}
+		return toMeReply(u, s.inviterNickname(c, u.InviterID)), nil
+	})
+	out, err := h(ctx, nil)
+	if err != nil {
+		return err
+	}
+	return ctx.Result(200, out)
 }
 
 func (s *UserService) GetNonce(ctx context.Context, req *pb.GetNonceRequest) (*pb.GetNonceReply, error) {
@@ -92,6 +144,63 @@ func (s *UserService) GetInvite(ctx context.Context, req *pb.GetInviteRequest) (
 		out.Invitees = append(out.Invitees, toInviteMember(m))
 	}
 	return out, nil
+}
+
+const OperationUserHTTPGetInvite = "/api.user.v1.UserService/HTTPGetInvite"
+
+func (s *UserService) HTTPGetInvite(ctx khttp.Context) error {
+	khttp.SetOperation(ctx, OperationUserHTTPGetInvite)
+	h := ctx.Middleware(func(c context.Context, _ interface{}) (interface{}, error) {
+		return s.uc.GetInviteSummary(c)
+	})
+	out, err := h(ctx, nil)
+	if err != nil {
+		return err
+	}
+	return ctx.Result(200, inviteJSON(out.(*biz.InviteSummary)))
+}
+
+func inviteJSON(sum *biz.InviteSummary) map[string]interface{} {
+	if sum == nil {
+		return map[string]interface{}{}
+	}
+	return map[string]interface{}{
+		"inviteCode":      sum.InviteCode,
+		"inviterId":       sum.InviterID,
+		"inviterNickname": sum.InviterNickname,
+		"parentId":        sum.ParentID,
+		"side":            sum.Side,
+		"leftCount":       sum.LeftCount,
+		"rightCount":      sum.RightCount,
+		"leftPerfFen":     sum.LeftPerfFen,
+		"rightPerfFen":    sum.RightPerfFen,
+		"largePerfFen":    sum.LargePerfFen,
+		"smallPerfFen":    sum.SmallPerfFen,
+		"largeSide":       sum.LargeSide,
+		"smallSide":       sum.SmallSide,
+		"hasAreas":        sum.HasAreas,
+		"leftMembers":     inviteMembersJSON(sum.LeftMembers),
+		"rightMembers":    inviteMembersJSON(sum.RightMembers),
+		"invitees":        inviteMembersJSON(sum.Invitees),
+	}
+}
+
+func inviteMembersJSON(list []*biz.InviteMember) []map[string]interface{} {
+	out := make([]map[string]interface{}, 0, len(list))
+	for _, m := range list {
+		if m == nil {
+			continue
+		}
+		out = append(out, map[string]interface{}{
+			"id":            m.ID,
+			"nickname":      m.Nickname,
+			"inviteCode":    m.InviteCode,
+			"side":          m.Side,
+			"perfFen":       m.PerfFen,
+			"walletAddress": m.WalletAddress,
+		})
+	}
+	return out
 }
 
 func toInviteMember(m *biz.InviteMember) *pb.InviteMember {

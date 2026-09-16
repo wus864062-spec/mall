@@ -132,6 +132,25 @@ func TestV6SharedAreaReport(t *testing.T) {
 	}
 }
 
+func TestAreasFromPerfUsesBuyNotSide(t *testing.T) {
+	got := AreasFromPerf(0, 0)
+	if got.HasAreas || got.LargeFen != 0 || got.SmallFen != 0 {
+		t.Fatal("左右都 0：下线没买过，没有大小区")
+	}
+	got = AreasFromPerf(U(1000), 0)
+	if !got.HasAreas || got.LargeFen != U(1000) || got.SmallFen != 0 || got.LargeSide != TrackLeft {
+		t.Fatalf("只有左区有认购 %+v", got)
+	}
+	got = AreasFromPerf(U(1000), U(3000))
+	if !got.HasAreas || got.LargeFen != U(3000) || got.SmallFen != U(1000) || got.LargeSide != TrackRight || got.SmallSide != TrackLeft {
+		t.Fatalf("右区业绩更大才是大区 %+v", got)
+	}
+	got = AreasFromPerf(U(2000), U(2000))
+	if !got.HasAreas || got.LargeFen != U(2000) || got.SmallFen != U(2000) || got.LargeSide != TrackLeft {
+		t.Fatalf("相等时金额相同，展示大区落左 %+v", got)
+	}
+}
+
 func TestOwnPerfNotInOwnTracks(t *testing.T) {
 	users := map[int64]*User{
 		1: {ID: 1, Nickname: "A", LeftID: 2, RightID: 3},
@@ -140,10 +159,10 @@ func TestOwnPerfNotInOwnTracks(t *testing.T) {
 		4: {ID: 4, Nickname: "D", ParentID: 2, Side: TrackRight, OccupiedPos: 1, PerfFen: 50000},
 	}
 	if SumPerf(LeftMembersOf(users, users[2])) != 0 {
-		t.Fatal("B 自己认购不算进自己的大区")
+		t.Fatal("B 自己认购不算进自己的左区")
 	}
 	if SumPerf(RightMembersOf(users, users[2])) != 50000 {
-		t.Fatal("B 小区只含下线")
+		t.Fatal("B 右区只含下线")
 	}
 	if SumPerf(LeftMembersOf(users, users[1])) != 100000 || SumPerf(RightMembersOf(users, users[1])) != 100000 {
 		t.Fatal("B/C 认购仍进 A 的双轨")
@@ -152,17 +171,18 @@ func TestOwnPerfNotInOwnTracks(t *testing.T) {
 
 func TestPairCapBySubscribeTier(t *testing.T) {
 	cases := []struct{ price, cap int64 }{
-		{100000, 60000},
-		{300000, 180000},
-		{600000, 400000},
-		{1000000, 800000},
-		{1200000, 800000},
-		{2400000, 1600000},
-		{3600000, 2400000},
-		{5000000, 3000000},
-		{7000000, 4200000},
-		{10000000, 6000000},
-		{16000000, 10000000},
+		{U(1000), U(600)},
+		{U(2000), U(1200)},
+		{U(3000), U(1800)},
+		{U(6000), U(4000)},
+		{U(10000), U(8000)},
+		{U(12000), U(8000)},
+		{U(24000), U(16000)},
+		{U(36000), U(24000)},
+		{U(50000), U(30000)},
+		{U(70000), U(42000)},
+		{U(100000), U(60000)},
+		{U(160000), U(100000)},
 	}
 	for _, c := range cases {
 		if got := PairCapFen(c.price); got != c.cap {
@@ -171,6 +191,105 @@ func TestPairCapBySubscribeTier(t *testing.T) {
 	}
 	if CapPairPayout(100000, 60000) != 60000 {
 		t.Fatal("1000档封顶 600")
+	}
+	if CapDynamicPayout(U(500), U(600), U(200)) != U(400) {
+		t.Fatal("剩余额度")
+	}
+	if CapDynamicPayout(U(500), U(600), U(600)) != 0 {
+		t.Fatal("用尽为 0")
+	}
+	if CapDynamicPayout(U(100), 0, 0) != 0 {
+		t.Fatal("无档位对碰/管理奖为 0")
+	}
+}
+
+func TestPairCapFenWithUsesConfigNotDefault(t *testing.T) {
+	// 配置项改的是日封顶；认购档位仍按目录，锁仓仍按认购总额。
+	over := map[int64]int64{U(1000): U(400)}
+	if PairCapFenWith(U(1000), over) != U(400) {
+		t.Fatal("1000 档用配置 400，不用默认 600")
+	}
+	if PairCapFen(U(1000)) != U(600) {
+		t.Fatal("默认表仍是 600")
+	}
+	if UnfreezeCapFenWith(U(1000), over) != U(400) {
+		t.Fatal("解冻额度用配置封顶")
+	}
+	if GrantUnfreezeFenWith(0, U(1000), over) != U(400) {
+		t.Fatal("当天未发按配置给 400")
+	}
+	if GrantUnfreezeFenWith(U(400), U(1000), over) != 0 {
+		t.Fatal("配置封顶已发满不加")
+	}
+	over[U(1000)] = 0
+	if PairCapFenWith(U(1000), over) != 0 {
+		t.Fatal("配置 0 表示该档当天不发")
+	}
+	if UnfreezeCapFenWith(U(2000), over) != U(1200) {
+		t.Fatal("没改的档仍用默认")
+	}
+}
+
+func TestUnfreezeCapUsesPaidTierNotItemSum(t *testing.T) {
+	if got := UnfreezeCapFen(U(1000)); got != U(600) {
+		t.Fatalf("1000 cap %d", got)
+	}
+	if got := UnfreezeCapFen(U(1000) + U(1000)); got != U(1200) {
+		t.Fatalf("1000+1000 升 2000 档 cap %d want 1200 not 600", got)
+	}
+	if got := UnfreezeCapFen(U(2000)); got != U(1200) {
+		t.Fatalf("2000 cap %d", got)
+	}
+	if got := UnfreezeCapFen(U(1000) + U(3000)); got != U(1800) {
+		t.Fatalf("1000+3000 cap %d want 1800 not 2400", got)
+	}
+	if UnfreezeCapFen(U(500)) != 0 {
+		t.Fatal("不到 1000 档封顶应为 0")
+	}
+	if GrantUnfreezeFen(0, U(1000)) != U(600) {
+		t.Fatal("当天未发、1000 档给 600")
+	}
+	if GrantUnfreezeFen(U(600), U(2000)) != U(600) {
+		t.Fatal("当天已发 600、升 2000 档只补 1200-600")
+	}
+	if GrantUnfreezeFen(U(1200), U(2000)) != 0 {
+		t.Fatal("当天已发 1200、仍 2000 档不加")
+	}
+	if GrantUnfreezeFen(U(1800), U(3000)) != 0 {
+		t.Fatal("当天已发 1800、仍 3000 档不加")
+	}
+	if GrantUnfreezeFen(U(1800), U(6000)) != U(2200) {
+		t.Fatal("当天 3000→6000 只补 4000-1800")
+	}
+	if UnfreezeGrantedTodayFen("2026-09-01", "2026-09-02", U(1800)) != 0 {
+		t.Fatal("换日视为未发")
+	}
+	if TakeUnfreeze(U(600), U(1000)) != U(600) {
+		t.Fatal("min(额度, 冻结)")
+	}
+	if TakeUnfreeze(U(600), U(100)) != U(100) {
+		t.Fatal("冻结不足")
+	}
+}
+
+func TestEffectivePackageFen(t *testing.T) {
+	if got := EffectivePackageFen(U(1000) + U(1000)); got != U(2000) {
+		t.Fatalf("1000+1000 升 2000 档 got %d", got)
+	}
+	if CartExcessFen(U(2000)) != 0 {
+		t.Fatal("2000 正好是档位，超额 0，锁仓按总额折")
+	}
+	if got := EffectivePackageFen(U(1500)); got != U(1000) {
+		t.Fatalf("1500 不到 2000 仍 1000 档 got %d", got)
+	}
+	if got := EffectivePackageFen(U(1000) + U(3000)); got != U(3000) {
+		t.Fatalf("1000+3000 got %d", got)
+	}
+	if got := EffectivePackageFen(U(12000) + U(24000)); got != U(36000) {
+		t.Fatalf("12000+24000 got %d", got)
+	}
+	if got := EffectivePackageFen(U(3000) + U(3000)); got != U(6000) {
+		t.Fatalf("3000+3000 got %d", got)
 	}
 }
 
@@ -194,5 +313,23 @@ func TestInviteAncestorsAndManageSplit(t *testing.T) {
 	}
 	if parts[0] != 100 {
 		t.Fatalf("余数给一代 %v", parts)
+	}
+}
+
+func TestCartExcessUsesPaidSumNotTier(t *testing.T) {
+	// 1000+3000=4000：档位 3000，超额 1000；锁仓必须按 4000 折，不能只折 3000。
+	total := U(4000)
+	if EffectivePackageFen(total) != U(3000) {
+		t.Fatalf("tier %d", EffectivePackageFen(total))
+	}
+	if CartExcessFen(total) != U(1000) {
+		t.Fatalf("excess %d", CartExcessFen(total))
+	}
+	got := CoinsMicroFromPay(total, CategoryWeb3)
+	if got != CoinsMicroFromPay(U(3000), CategoryWeb3)+CoinsMicroFromPay(U(1000), CategoryWeb3) {
+		t.Fatalf("lock from total %d", got)
+	}
+	if CoinsMicroFromPay(EffectivePackageFen(total), CategoryWeb3) == got {
+		t.Fatal("must not pass tier into CoinsMicroFromPay only")
 	}
 }

@@ -2,6 +2,7 @@ package server
 
 import (
 	"net/http"
+	"strings"
 
 	adminV1 "mall/api/admin/v1"
 	v1 "mall/api/mall/v1"
@@ -30,6 +31,7 @@ func NewHTTPServer(
 	_ = logger
 	var opts = []transhttp.ServerOption{
 		transhttp.Filter(corsFilter),
+		transhttp.Filter(uploadsFilter(admin.UploadsDir())),
 		transhttp.Middleware(
 			recovery.Recovery(),
 			JWTMiddleware(),
@@ -46,6 +48,12 @@ func NewHTTPServer(
 		opts = append(opts, transhttp.Timeout(c.Http.Timeout.AsDuration()))
 	}
 	srv := transhttp.NewServer(opts...)
+	r := srv.Route("/")
+	r.POST("/v1/invite/bind", user.HTTPBindInvite)
+	r.GET("/v1/invite", user.HTTPGetInvite)
+	r.GET("/v1/admin/stats", admin.HTTPStats)
+	r.GET("/v1/admin/dashboard", admin.HTTPStats)
+	r.POST("/v1/admin/test-data/clear", admin.HTTPClearTestData)
 
 	v1.RegisterGreeterHTTPServer(srv, greeter)
 	userV1.RegisterUserServiceHTTPServer(srv, user)
@@ -53,9 +61,31 @@ func NewHTTPServer(
 	walletV1.RegisterWalletServiceHTTPServer(srv, wallet)
 	orderV1.RegisterOrderServiceHTTPServer(srv, order)
 	adminV1.RegisterAdminServiceHTTPServer(srv, admin)
-	r := srv.Route("/")
 	r.POST("/v1/admin/login", admin.HTTPLogin)
+	r.GET("/v1/admin/ledger", admin.HTTPListLedger)
 	r.GET("/v1/admin/orders", admin.HTTPListOrders)
+	r.GET("/v1/admin/search", admin.HTTPSearch)
+	r.GET("/v1/admin/goods", admin.HTTPListGoods)
+	r.POST("/v1/admin/products", admin.HTTPCreateProduct)
+	r.PUT("/v1/admin/products/{id}/meta", admin.HTTPUpdateProductMeta)
+	r.GET("/v1/admin/packages", admin.HTTPListPackages)
+	r.POST("/v1/admin/packages", admin.HTTPCreatePackage)
+	r.PUT("/v1/admin/packages/{id}", admin.HTTPUpdatePackage)
+	r.PUT("/v1/admin/packages/{id}/status", admin.HTTPSetPackageStatus)
+	r.POST("/v1/admin/packages/image", admin.HTTPUploadPackageImage)
+	r.GET("/v1/admin/config", admin.HTTPGetConfig)
+	r.PUT("/v1/admin/config", admin.HTTPUpdateConfig)
+	r.GET("/v1/admin/members", admin.HTTPListMembers)
+	r.GET("/v1/admin/members/{id}/invitees", admin.HTTPListInvitees)
+	r.POST("/v1/admin/users/{id}/action", admin.HTTPUserAction)
+	r.GET("/v1/wallet/summary", wallet.HTTPWalletSummary)
+	r.GET("/v1/wallet/recharge-ports", wallet.HTTPRechargePorts)
+	r.POST("/v1/wallet/recharge", wallet.HTTPRecharge)
+	r.GET("/v1/wallet/ledger", wallet.HTTPListLedger)
+	r.POST("/v1/wallet/withdraw", wallet.HTTPWithdraw)
+	r.GET("/v1/users/need-invite", user.HTTPNeedInvite)
+	r.GET("/v1/my/orders", order.HTTPListOrders)
+	r.POST("/v1/orders/cart", order.HTTPCreateCart)
 
 	return srv
 }
@@ -75,4 +105,20 @@ func corsFilter(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+func uploadsFilter(dir string) func(http.Handler) http.Handler {
+	if dir == "" {
+		dir = "data/uploads"
+	}
+	fs := http.StripPrefix("/uploads/", http.FileServer(http.Dir(dir)))
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/uploads/") {
+				fs.ServeHTTP(w, r)
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
 }

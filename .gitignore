@@ -17,3 +17,7 @@ Thumbs.db
 
 # 日志
 *.log
+/logs/
+
+# 编辑器
+.cursor/

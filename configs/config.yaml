@@ -1,17 +1,20 @@
 server:
   http:
     addr: 0.0.0.0:8000
-    timeout: 10s
+    timeout: 60s
   grpc:
     addr: 0.0.0.0:9000
-    timeout: 10s
+    timeout: 15s
 # JWT 密钥请用环境变量 JWT_SECRET；未设置时每次启动会随机生成（登录态会失效）。
+# 万能邀请码：环境变量 MALL_MASTER_INVITE，未设时为 0xD0E440F03b2b0CE452AE6EDA56750b97Ef7A4b9F。只能用一次，用后成为根节点。
+# 提现热钱包：MALL_HOT_WALLET_KEY 或 MALL_HOT_WALLET_KEY_FILE（文件里一行 MALL_HOT_WALLET_KEY=私钥）。不要把私钥写进本文件。可选 MALL_BSC_RPC、MALL_USDT_ADDRESS。
+# USDT 提现链上只打「申请额−手续费」到用户登录钱包；打失败不扣账。热钱包需有 USDT 和少量 BNB 做 gas。
 # 用户端 dapp（~/projects/dapp）开发：npm run dev:test，vite 将 /v1 代理到本服务 :8000。
-# 本地数据文件默认 data/mall.json，可用 MALL_DATA_FILE 覆盖。
+# MySQL：data.database.source，也可用环境变量 MALL_MYSQL_DSN 覆盖。首次空库会从 data/mall.json 导入。
 data:
   database:
     driver: mysql
-    source: root:root@tcp(127.0.0.1:3306)/test?parseTime=True&loc=Local
+    source: root:123456@tcp(127.0.0.1:3306)/mall?charset=utf8mb4&parseTime=True&loc=Local
   redis:
     addr: 127.0.0.1:6379
     read_timeout: 0.2s

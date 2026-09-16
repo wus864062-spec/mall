@@ -2,14 +2,17 @@ package biz
 
 import (
 	"context"
+	"os"
 	"strings"
 )
 
 type InviteMember struct {
-	ID         int64
-	Nickname   string
-	InviteCode string
-	Side       string
+	ID            int64
+	Nickname      string
+	InviteCode    string
+	WalletAddress string
+	PerfFen       int64
+	Side          string
 }
 
 type InviteSummary struct {
@@ -20,6 +23,13 @@ type InviteSummary struct {
 	Side            string
 	LeftCount       int64
 	RightCount      int64
+	LeftPerfFen     int64
+	RightPerfFen    int64
+	LargePerfFen    int64
+	SmallPerfFen    int64
+	LargeSide       string
+	SmallSide       string
+	HasAreas        bool
 	LeftMembers     []*InviteMember
 	RightMembers    []*InviteMember
 	Invitees        []*InviteMember
@@ -57,28 +67,83 @@ func (uc *UserUsecase) GetInviteSummary(ctx context.Context) (*InviteSummary, er
 	}
 	sum.LeftCount = int64(len(left))
 	sum.RightCount = int64(len(right))
+	sum.LeftPerfFen = SumPerf(left)
+	sum.RightPerfFen = SumPerf(right)
+	areas := AreasFromPerf(sum.LeftPerfFen, sum.RightPerfFen)
+	sum.HasAreas = areas.HasAreas
+	sum.LargePerfFen = areas.LargeFen
+	sum.SmallPerfFen = areas.SmallFen
+	sum.LargeSide = areas.LargeSide
+	sum.SmallSide = areas.SmallSide
 	for _, it := range left {
-		sum.LeftMembers = append(sum.LeftMembers, &InviteMember{ID: it.ID, Nickname: it.Nickname, InviteCode: it.InviteCode, Side: TrackLeft})
+		sum.LeftMembers = append(sum.LeftMembers, inviteMemberFromUser(it, TrackLeft))
 	}
 	for _, it := range right {
-		sum.RightMembers = append(sum.RightMembers, &InviteMember{ID: it.ID, Nickname: it.Nickname, InviteCode: it.InviteCode, Side: TrackRight})
+		sum.RightMembers = append(sum.RightMembers, inviteMemberFromUser(it, TrackRight))
 	}
 	invitees, err := uc.repo.ListInvitees(ctx, u.ID)
 	if err != nil {
 		return nil, err
 	}
 	for _, it := range invitees {
-		sum.Invitees = append(sum.Invitees, &InviteMember{ID: it.ID, Nickname: it.Nickname, InviteCode: it.InviteCode, Side: it.Side})
+		sum.Invitees = append(sum.Invitees, inviteMemberFromUser(it, it.Side))
 	}
 	return sum, nil
 }
 
-func (uc *UserUsecase) bindInvite(ctx context.Context, user *User, code string) error {
-	if user.InviterID != 0 {
-		return ErrInviteAlreadyBound
+func inviteMemberFromUser(it *User, side string) *InviteMember {
+	if it == nil {
+		return &InviteMember{Side: side}
 	}
-	code = strings.ToUpper(strings.TrimSpace(code))
+	return &InviteMember{
+		ID:            it.ID,
+		Nickname:      it.Nickname,
+		InviteCode:    it.InviteCode,
+		WalletAddress: it.WalletAddress,
+		PerfFen:       it.PerfFen,
+		Side:          side,
+	}
+}
+
+func NormalizeInviteCode(code string) string {
+	return strings.TrimSpace(code)
+}
+
+const defaultMasterInviteCode = "0xD0E440F03b2b0CE452AE6EDA56750b97Ef7A4b9F"
+
+// MasterInviteCode 万能邀请码。环境变量 MALL_MASTER_INVITE 可改；未设时用 0xD0E440F03b2b0CE452AE6EDA56750b97Ef7A4b9F。
+func MasterInviteCode() string {
+	if v := strings.TrimSpace(os.Getenv("MALL_MASTER_INVITE")); v != "" {
+		return v
+	}
+	return defaultMasterInviteCode
+}
+
+func IsMasterInviteCode(code string) bool {
+	want := MasterInviteCode()
+	return want != "" && strings.EqualFold(NormalizeInviteCode(code), want)
+}
+
+func (uc *UserUsecase) bindInvite(ctx context.Context, user *User, code string) error {
+	if user.InviterID != 0 || user.InviteRoot {
+		return nil
+	}
+	code = NormalizeInviteCode(code)
+	if IsMasterInviteCode(code) {
+		taken, err := uc.repo.HasInviteRoot(ctx, user.ID)
+		if err != nil {
+			return err
+		}
+		if taken {
+			return ErrInviteInvalid
+		}
+		user.InviteRoot = true
+		return uc.repo.Update(ctx, user)
+	}
 	if code == "" {
+		if IsAdmin(user) {
+			return nil
+		}
 		return ErrInviteInvalid
 	}
 	inviter, err := uc.repo.GetByInviteCode(ctx, code)
@@ -86,7 +151,7 @@ func (uc *UserUsecase) bindInvite(ctx context.Context, user *User, code string) 
 		return ErrInviteInvalid
 	}
 	if inviter.ID == user.ID {
-		return ErrInviteSelf
+		return nil
 	}
 	if err := uc.ensureNoInviteCycle(ctx, user.ID, inviter); err != nil {
 		return err

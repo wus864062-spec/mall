@@ -44,7 +44,6 @@ func RegisterAdminServiceHTTPServer(s *http.Server, srv AdminServiceHTTPServer) 
 	r.GET("/v1/admin/users/{id}", _AdminService_GetUser0_HTTP_Handler(srv))
 	r.GET("/v1/admin/products", _AdminService_ListProducts0_HTTP_Handler(srv))
 	r.PUT("/v1/admin/products/{id}", _AdminService_UpdateProduct0_HTTP_Handler(srv))
-	r.GET("/v1/admin/ledger", _AdminService_ListLedger0_HTTP_Handler(srv))
 	r.POST("/v1/admin/pair-settle", _AdminService_ForcePairSettle0_HTTP_Handler(srv))
 }
 

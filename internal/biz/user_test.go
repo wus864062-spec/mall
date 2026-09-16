@@ -24,3 +24,21 @@ func TestNormalizeProfile(t *testing.T) {
 		t.Fatal("too long")
 	}
 }
+
+func TestLineUserIDs(t *testing.T) {
+	users := map[int64]*User{
+		1: {ID: 1},
+		2: {ID: 2, InviterID: 1},
+		3: {ID: 3, InviterID: 2},
+		4: {ID: 4, InviterID: 1},
+		5: {ID: 5, InviterID: 9},
+	}
+	got := LineUserIDs(users, 1)
+	seen := map[int64]bool{}
+	for _, id := range got {
+		seen[id] = true
+	}
+	if !seen[1] || !seen[2] || !seen[3] || !seen[4] || seen[5] || len(got) != 4 {
+		t.Fatalf("line=%v", got)
+	}
+}
